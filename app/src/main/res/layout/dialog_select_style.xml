@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@drawable/shape_bg_dialog"
+    android:orientation="vertical"
+    android:padding="10dp">
+
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:paddingTop="10dp"
+        android:paddingBottom="10dp">
+
+        <ImageView
+            android:id="@+id/ic_photo"
+            android:layout_width="80dp"
+            android:layout_height="80dp"
+            android:layout_marginRight="10dp"
+            android:src="@drawable/photo" />
+
+        <TextView
+            android:id="@+id/tv_price"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_toRightOf="@id/ic_photo"
+            android:text="￥0.00"
+            android:textColor="#df2140"
+            android:textSize="16sp" />
+
+        <TextView
+            android:id="@+id/tv_reserve"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_centerVertical="true"
+            android:layout_toRightOf="@id/ic_photo"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="库存0件"
+            android:textColor="#999" />
+
+        <TextView
+            android:id="@+id/tv_style"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_alignBottom="@id/ic_photo"
+            android:layout_toRightOf="@id/ic_photo"
+            android:ellipsize="end"
+            android:maxLines="1"
+            android:text="已选："
+            android:textColor="#000" />
+
+        <ImageView
+            android:id="@+id/iv_close"
+            android:layout_width="25dp"
+            android:layout_height="25dp"
+            android:layout_alignParentRight="true"
+            android:src="@drawable/ic_delete" />
+    </RelativeLayout>
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/rv_style"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="10dp"
+        android:gravity="center_vertical">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:text="购买数量（限购1件）"
+            android:textColor="#000"
+            android:textSize="16sp" />
+        <TextView
+            android:layout_width="30dp"
+            android:id="@+id/tv_sub"
+            android:text="-"
+            android:gravity="center"
+            android:background="@drawable/selector_bg_operator"
+            android:layout_height="30dp"/>
+        <TextView
+            android:layout_width="40dp"
+            android:background="@drawable/selector_bg_operator"
+            android:id="@+id/tv_num"
+            android:text="1"
+            android:layout_marginLeft="-1dp"
+            android:layout_marginRight="-1dp"
+            android:gravity="center"
+            android:layout_height="30dp"/>
+        <TextView
+            android:background="@drawable/selector_bg_operator"
+            android:layout_width="30dp"
+            android:id="@+id/tv_add"
+            android:text="+"
+            android:gravity="center"
+            android:layout_height="30dp"/>
+
+
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/btn_add"
+        android:layout_width="match_parent"
+        android:layout_height="40dp"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="30dp"
+        android:layout_marginRight="10dp"
+        android:layout_marginBottom="10dp"
+        android:background="#257e41"
+        android:text="加入购物车"
+        android:textColor="#fff" />
+</LinearLayout>

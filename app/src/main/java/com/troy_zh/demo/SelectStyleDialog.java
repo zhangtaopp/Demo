@@ -3,6 +3,7 @@ package com.troy_zh.demo;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.res.AssetManager;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.Gravity;
 import android.view.LayoutInflater;
@@ -23,6 +24,8 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -52,6 +55,7 @@ public class SelectStyleDialog extends Dialog implements View.OnClickListener {
     private TextView mTvAdd;
     private List<GoodDetailBean.AttrBean> attr;
     private List<GoodDetailBean.AttrDetailBean> attrDetail;
+    private List<String> miArray;
 
     public SelectStyleDialog(@NonNull Context context) {
         super(context);
@@ -132,30 +136,33 @@ public class SelectStyleDialog extends Dialog implements View.OnClickListener {
         mRvStyle.setLayoutManager(new LinearLayoutManager(mContext));
         styleAdapter = new StyleAdapter(mContext, attr);
         mRvStyle.setAdapter(styleAdapter);
+        miArray = getMiArray(attrDetail);
         setAttr(attrDetail);
         styleAdapter.setOnAttrDataChange(new AttrAdapter.OnAttrDataChange() {
             @Override
             public void onChange() {
                 Map<Integer, Integer> attrMap = styleAdapter.getAttr();
-                Log.d(TAG, "onChange: " + attrMap.size());
                 String price = "0.00";
                 String reserve = "0";
                 String attr = "";
                 List<GoodDetailBean.AttrDetailBean> list = compareAttr(attrMap);
+                setAttr(attrDetail, attrMap);
                 switch (attrMap.size()) {
                     case 0:
                     case 1:
                     case 2:
-                        setAttr(list,attrMap);
+//                        setAttr(list,attrMap);
                         break;
                     case 3:
                         String attrs = new Gson().toJson(attrMap);
                         Log.d(TAG, "onChange: attrs=" + attrs);
                         if (list.size() > 0) {
-                            GoodDetailBean.AttrDetailBean attrDetailBean = list.get(0);
-                            price = attrDetailBean.getSpecs_price();
-                            reserve = attrDetailBean.getSpecs_num();
-                            attr = attrDetailBean.getSpecs_goods_zn();
+                            GoodDetailBean.AttrDetailBean attrDetailBean = compareAttr(list, attrMap);
+                            if (null != attrDetailBean) {
+                                price = attrDetailBean.getSpecs_price();
+                                reserve = attrDetailBean.getSpecs_num();
+                                attr = attrDetailBean.getSpecs_goods_zn();
+                            }
                         }
                         break;
                     default:
@@ -169,43 +176,107 @@ public class SelectStyleDialog extends Dialog implements View.OnClickListener {
     }
 
     private void setAttr(List<GoodDetailBean.AttrDetailBean> attrDetail, Map<Integer, Integer> attrMap) {
-        List<String> validAttr = new ArrayList<>();
+        /*List<String> validAttr = new ArrayList<>();
         for (int i = 0; i < attrDetail.size(); i++) {
             GoodDetailBean.AttrDetailBean attrDetailBean = attrDetail.get(i);
             String specs_goods = attrDetailBean.getSpecs_goods();
             String[] split = specs_goods.split(",");
             validAttr.addAll(Arrays.asList(split));
         }
+        for (Map.Entry<Integer, Integer> attrM : attrMap.entrySet()) {
+            for (int j = 0; j < attr.size(); j++) {
+                GoodDetailBean.AttrBean attrBean = attr.get(j);
+                if (attrMap.containsKey(attrBean.getKey_id())) {
+                    continue;
+                }
+                for (int k = 0; k < attrBean.getChild().size(); k++) {
+                    String attr = attrBean.getKey_id() + ":" + attrBean.getChild().get(k).getId();
+                    attrBean.getChild().get(k).setEnable(validAttr.contains(attr));
+                }
+            }
+        }*/
+        Map<Integer, Integer> temp;
         for (int j = 0; j < attr.size(); j++) {
             GoodDetailBean.AttrBean attrBean = attr.get(j);
-            if (attrMap.containsKey(attrBean.getKey_id())){
-                continue;
-            }
             for (int k = 0; k < attrBean.getChild().size(); k++) {
-                String attr = attrBean.getKey_id() + ":" + attrBean.getChild().get(k).getId();
-                attrBean.getChild().get(k).setEnable(validAttr.contains(attr));
+                temp = new HashMap<>(attrMap);
+                temp.put(attrBean.getKey_id(), attrBean.getChild().get(k).getId());
+                String attrs = getAttrs(temp);
+                attrBean.getChild().get(k).setEnable(miArray.contains(attrs));
             }
         }
         styleAdapter.notifyDataSetChanged();
     }
 
+    public String getAttrs(Map<Integer, Integer> attrMap) {
+        StringBuilder stringBuilder = new StringBuilder();
+        ArrayList<Map.Entry<Integer,Integer>> l = new ArrayList<>(attrMap.entrySet());
+        Collections.sort(l, new Comparator<Map.Entry<Integer, Integer>>() {
+            @Override
+            public int compare(Map.Entry<Integer, Integer> o1, Map.Entry<Integer, Integer> o2) {
+                return (o1.getKey() - o2.getKey());
+            }
+        });
+        for (Map.Entry<Integer, Integer> attrM : l) {
+            stringBuilder.append(attrM.getKey()).append(":").append(attrM.getValue()+",");
+        }
+        int i = stringBuilder.lastIndexOf(",");
+        String substring = stringBuilder.substring(0, i);
+        return substring;
+    }
+
+    public List<String> getMiArray(List<GoodDetailBean.AttrDetailBean> attrDetail) {
+        List<String> all = new ArrayList<>();
+        for (int i = 0; i < attrDetail.size(); i++) {
+            List<List<String>> lists = powerSet(Arrays.asList(attrDetail.get(i).getSpecs_goods().split(",")));
+            for (List<String> a : lists) {
+                StringBuilder stringBuilder = new StringBuilder();
+                for (int j = 0; j < a.size(); j++) {
+                    if (j == 0) {
+                        stringBuilder.append(a.get(j));
+                    } else {
+                        stringBuilder.append("," + a.get(j));
+                    }
+                }
+                if (!TextUtils.isEmpty(stringBuilder.toString())) {
+                    all.add(stringBuilder.toString());
+                }
+            }
+        }
+        return all;
+    }
+
+    public List<List<String>> powerSet(List<String> set) {
+        //已知所求集合的幂集会有2^n个元素
+        int size = 2 << set.size();
+        List<List<String>> powerSet = new ArrayList<>(size);
+        powerSet.add(new ArrayList<String>());
+        //首先空集肯定是集合的幂集
+        for (String element : set) {
+            //计算当前元素与已存在幂集的组合
+            int preSize = powerSet.size();
+            for (int i = 0; i < preSize; i++) {
+                List<String> combineSubset = new ArrayList<>(powerSet.get(i));
+                combineSubset.add(element);
+                powerSet.add(combineSubset);
+            }
+        }
+        return powerSet;
+    }
+
     private void setAttr(List<GoodDetailBean.AttrDetailBean> attrDetail) {
-        List<String> validAttr = new ArrayList<>();
+        /*List<String> validAttr = new ArrayList<>();
         for (int i = 0; i < attrDetail.size(); i++) {
             GoodDetailBean.AttrDetailBean attrDetailBean = attrDetail.get(i);
             String specs_goods = attrDetailBean.getSpecs_goods();
             String[] split = specs_goods.split(",");
             validAttr.addAll(Arrays.asList(split));
-        }
+        }*/
         for (int j = 0; j < attr.size(); j++) {
             GoodDetailBean.AttrBean attrBean = attr.get(j);
             for (int k = 0; k < attrBean.getChild().size(); k++) {
                 String attr = attrBean.getKey_id() + ":" + attrBean.getChild().get(k).getId();
-                /*if (validAttr.contains(attr)) {
-                }else {
-
-                }*/
-                attrBean.getChild().get(k).setEnable(validAttr.contains(attr));
+                attrBean.getChild().get(k).setEnable(miArray.contains(attr));
             }
         }
         styleAdapter.notifyDataSetChanged();
@@ -219,21 +290,40 @@ public class SelectStyleDialog extends Dialog implements View.OnClickListener {
         for (int i = 0; i < attrDetail.size(); i++) {
             GoodDetailBean.AttrDetailBean attrDetailBean = attrDetail.get(i);
             String attrs = attrDetailBean.getSpecs_goods();
+            int flag = 0;
+            for (Map.Entry<Integer, Integer> attrEntry : attrMap.entrySet()) {
+                String attr = attrEntry.getKey() + ":" + attrEntry.getValue();
+                if (attrs.contains(attr)) {
+                    Log.d(TAG, "compareAttr: " + attrs + "  " + attr);
+                    flag++;
+                }
+            }
+            if (flag >= attrMap.size() - 1) {
+                list.add(attrDetailBean);
+            }
+        }
+
+        return list;
+    }
+
+    private GoodDetailBean.AttrDetailBean compareAttr(List<GoodDetailBean.AttrDetailBean> attrDetail, Map<Integer, Integer> attrMap) {
+        for (int i = 0; i < attrDetail.size(); i++) {
+            GoodDetailBean.AttrDetailBean attrDetailBean = attrDetail.get(i);
+            String attrs = attrDetailBean.getSpecs_goods();
             boolean flag = true;
             for (Map.Entry<Integer, Integer> attrEntry : attrMap.entrySet()) {
                 String attr = attrEntry.getKey() + ":" + attrEntry.getValue();
                 if (!attrs.contains(attr)) {
                     Log.d(TAG, "compareAttr: " + attrs + "  " + attr);
                     flag = false;
-                    break;
                 }
             }
             if (flag) {
-                list.add(attrDetailBean);
+                return attrDetailBean;
             }
         }
 
-        return list;
+        return null;
     }
 
     /**

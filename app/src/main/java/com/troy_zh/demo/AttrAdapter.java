@@ -71,7 +71,7 @@ public class AttrAdapter extends RecyclerView.Adapter<AttrAdapter.ViewHolder> {
         public void setData(final GoodDetailBean.ValueBean valueBean, final int position) {
             checkBox.setText(valueBean.getAttribute_value());
             checkBox.setEnabled(valueBean.isEnable());
-            checkBox.setChecked(valueBean.isChecked());
+            checkBox.setChecked(valueBean.isEnable()?valueBean.isChecked():false);
             checkBox.setOnClickListener(new View.OnClickListener() {
                 @Override
                 public void onClick(View view) {
